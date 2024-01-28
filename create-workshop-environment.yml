@@ -1,0 +1,73 @@
+---
+
+- name: Create Workshop environment
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Get package facts
+      ansible.builtin.package_facts:
+
+    - name: Install Podman
+      ansible.builtin.package:
+        name: podman
+        state: present
+      become: true
+      when: ansible_facts.packages.podman is not defined
+
+    - name: Pull image for managed node containers
+      containers.podman.podman_image:
+        name: docker.io/timgrt/rockylinux8-ansible
+
+    - name: Start managed node containers
+      containers.podman.podman_container:
+        name: "{{ item.name }}"
+        image: docker.io/timgrt/rockylinux8-ansible:latest
+        hostname: "{{ item.name }}"
+        ports: "{{ item.ports }}"
+        state: started
+      loop:
+        - name: node1
+          ports:
+            - 8080:80
+            - 8081:8080
+        - name: node2
+          ports:
+            - 8082:80
+            - 8083:8080
+        - name: node3
+          ports:
+            - 8084:80
+            - 8085:8080
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Create folder for workshop inventory
+      ansible.builtin.file:
+        path: "{{ ansible_user_dir }}/lab_inventory"
+        state: directory
+        mode: "0755"
+
+    - name: Create workshop inventory file
+      ansible.builtin.copy:
+        content: |
+          [control]
+          ansible-1
+
+          [web]
+          node1
+          node2
+          node3
+
+          [web:vars]
+          ansible_connection = podman
+          ansible_python_interpreter = auto_silent
+        dest: "{{ ansible_user_dir }}/lab_inventory/hosts"
+        mode: "0644"
+
+    - name: Update localhost in /etc/hosts to resolve all managed node containers
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        line: "\\1 node1 node2 node3"
+        regexp: "^(127\\.0\\.0\\.1.*)$"
+        backrefs: true
+      become: true

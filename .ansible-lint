@@ -1,0 +1,12 @@
+---
+
+offline: false
+quiet: true
+skip_list:
+  - yaml[line-length]
+  - role-name
+  - var-naming[no-role-prefix]
+exclude_paths:
+  - .github/
+  - mkdocs.yml
+  - reset-local-user-password.yml # Collection only available in official EEs

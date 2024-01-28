@@ -1,0 +1,27 @@
+---
+
+- name: Delete Workshop environment
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Delete managed node containers
+      containers.podman.podman_container:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - node1
+        - node2
+        - node3
+
+    - name: Delete folder with workshop inventory
+      ansible.builtin.file:
+        path: "{{ ansible_user_dir }}/lab_inventory"
+        state: absent
+
+    - name: Remove managed nodes from localhost in /etc/hosts
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        line: "\\1"
+        regexp: "^(127\\.0\\.0\\.1.*)( node1 node2 node3)$$"
+        backrefs: true
+      become: true
