@@ -18,28 +18,18 @@
       containers.podman.podman_image:
         name: docker.io/timgrt/rockylinux8-ansible
 
-    - name: Start managed node containers
+    - name: Start managed node containers, publish 3 ports for each container
       containers.podman.podman_container:
-        name: "{{ item.name }}"
+        name: "{{ item }}"
         image: docker.io/timgrt/rockylinux8-ansible:latest
-        hostname: "{{ item.name }}"
-        ports: "{{ item.ports }}"
+        hostname: "{{ item }}"
+        ports:
+          - "{{ hostvars[item]['ssh_port'] }}:22"
+          - "{{ hostvars[item]['webserver_port1'] }}:80"
+          - "{{ hostvars[item]['webserver_port2'] }}:8080"
+        stop_signal: 15
         state: started
-      loop:
-        - name: node1
-          ports:
-            - 8080:80
-            - 8081:8080
-        - name: node2
-          ports:
-            - 8082:80
-            - 8083:8080
-        - name: node3
-          ports:
-            - 8084:80
-            - 8085:8080
-      loop_control:
-        label: "{{ item.name }}"
+      loop: "{{ groups['managed_nodes'] }}"
 
     - name: Create folder for workshop inventory
       ansible.builtin.file:
@@ -48,26 +38,59 @@
         mode: "0755"
 
     - name: Create workshop inventory file
-      ansible.builtin.copy:
-        content: |
-          [control]
-          ansible-1
-
-          [web]
-          node1
-          node2
-          node3
-
-          [web:vars]
-          ansible_connection = podman
-          ansible_python_interpreter = auto_silent
+      ansible.builtin.template:
+        src: workshop-inventory.ini.j2
         dest: "{{ ansible_user_dir }}/lab_inventory/hosts"
         mode: "0644"
 
     - name: Update localhost in /etc/hosts to resolve all managed node containers
       ansible.builtin.lineinfile:
         path: /etc/hosts
-        line: "\\1 node1 node2 node3"
+        line: "\\g<1> {{ groups['managed_nodes'] | join(' ') }}"
         regexp: "^(127\\.0\\.0\\.1.*)$"
         backrefs: true
       become: true
+      tags: test
+    
+    - name: Add block to ssh_config for easy SSH access to managed nodes
+      ansible.builtin.blockinfile:
+        block: "{{ lookup('template', 'ssh-config.j2') }}"
+        path: "{{ ansible_user_dir }}/.ssh/config"
+        marker: "# {mark} ANSIBLE MANAGED BLOCK FOR WORKSHOP ENVIRONMENT"
+        
+    - name: Deploy ansible.cfg to home directory
+      ansible.builtin.template:
+        src: "ansible.cfg"
+        dest: "{{ ansible_user_dir }}/.ansible.cfg"
+        mode: "0644"
+
+    - name: Create OpenSSH keypair for accessing managed nodes
+      community.crypto.openssh_keypair:
+        path: "{{ ansible_user_dir }}/.ssh/workshop"
+
+- name: Prepare managed nodes
+  hosts: managed_nodes
+  connection: podman
+  tasks:
+    - name: Install SSH daemon
+      ansible.builtin.package:
+        name: openssh-server
+        state: present
+
+    - name: Start SSH daemon
+      ansible.builtin.service:
+        name: sshd
+        state: started
+
+    - name: Remove /run/nologin to be able to login as unprivileged user
+      ansible.builtin.file:
+        path: /run/nologin
+        state: absent
+
+    - name: Add public key of workshop SSH keypair to authorized_keys of ansible user
+      ansible.posix.authorized_key:
+        user: ansible
+        key: "{{ lookup('file', '/home/' ~ lookup('env', 'USER') ~ '/.ssh/workshop.pub') }}"
+        state: present
+      become: true
+      become_user: ansible

@@ -1,0 +1,4 @@
+[web]
+{% for host in groups['managed_nodes'] %}
+{{ host }}
+{% endfor %}
