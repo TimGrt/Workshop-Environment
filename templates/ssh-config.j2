@@ -1,7 +1,9 @@
+{# Template will be added as a block to ~/.ssh/config #}
 {% for host in groups['managed_nodes'] %}
 Host {{ host }}
   Hostname localhost
   User ansible
   Port {{ hostvars[host]['ssh_port'] }}
   IdentityFile ~/.ssh/workshop
+  StrictHostKeyChecking no
 {% endfor %}

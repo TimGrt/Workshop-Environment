@@ -43,30 +43,48 @@
         dest: "{{ ansible_user_dir }}/lab_inventory/hosts"
         mode: "0644"
 
-    - name: Update localhost in /etc/hosts to resolve all managed node containers
-      ansible.builtin.lineinfile:
-        path: /etc/hosts
-        line: "\\g<1> {{ groups['managed_nodes'] | join(' ') }}"
-        regexp: "^(127\\.0\\.0\\.1.*)$"
-        backrefs: true
-      become: true
-      tags: test
-    
-    - name: Add block to ssh_config for easy SSH access to managed nodes
+    - name: Add block to ssh_config for easy SSH access to managed nodes # noqa risky-file-permissions
       ansible.builtin.blockinfile:
         block: "{{ lookup('template', 'ssh-config.j2') }}"
         path: "{{ ansible_user_dir }}/.ssh/config"
+        create: true
         marker: "# {mark} ANSIBLE MANAGED BLOCK FOR WORKSHOP ENVIRONMENT"
-        
+
     - name: Deploy ansible.cfg to home directory
       ansible.builtin.template:
         src: "ansible.cfg"
         dest: "{{ ansible_user_dir }}/.ansible.cfg"
         mode: "0644"
+        backup: true
+      register: config_deployment
+
+    - name: Backup file created
+      ansible.builtin.debug:
+        msg: Backup file at "{{ config_deployment.backup_file }}"
+      when: config_deployment.backup_file is defined
+
+    - name: Check for existing SSH keypair
+      ansible.builtin.find:
+        path: "{{ ansible_user_dir }}/.ssh"
+        file_type: file
+        patterns: ansible-workshop-environment*
+      register: find_keypair
+
+    - name: Ensure no keypair with distinct name for workshop is present
+      ansible.builtin.assert:
+        that:
+          - find_keypair.matched == 0
+        quiet: true
+        fail_msg: |
+          A keypair with the name 'ansible-workshop-environment' is present!
+          This is extremely unlikely, but the existing key will not be regenerated.
+          The 'delete-workshop-environment.yml' playbook WILL REMOVE this key!
+          MOVE THE KEY MANUALLY BEFORE RUNNING THIS PLAYBOOK AGAIN OR ANY OTHER FROM THIS PROJECT!
 
     - name: Create OpenSSH keypair for accessing managed nodes
       community.crypto.openssh_keypair:
-        path: "{{ ansible_user_dir }}/.ssh/workshop"
+        path: "{{ ansible_user_dir }}/.ssh/ansible-workshop-environment"
+        regenerate: never
 
 - name: Prepare managed nodes
   hosts: managed_nodes
@@ -90,7 +108,7 @@
     - name: Add public key of workshop SSH keypair to authorized_keys of ansible user
       ansible.posix.authorized_key:
         user: ansible
-        key: "{{ lookup('file', '/home/' ~ lookup('env', 'USER') ~ '/.ssh/workshop.pub') }}"
+        key: "{{ lookup('file', '/home/' ~ lookup('env', 'USER') ~ '/.ssh/ansible-workshop-environment.pub') }}"
         state: present
       become: true
       become_user: ansible
