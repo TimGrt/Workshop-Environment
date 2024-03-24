@@ -10,33 +10,61 @@
         state: absent
       loop: "{{ groups['managed_nodes'] }}"
 
+    - name: Delete Podman
+      ansible.builtin.package:
+        name: podman
+        state: absent
+      when: delete_podman | default(false)
+
     - name: Delete folder with workshop inventory
       ansible.builtin.file:
         path: "{{ ansible_user_dir }}/lab_inventory"
         state: absent
 
-    - name: Remove managed nodes from localhost in /etc/hosts
-      ansible.builtin.lineinfile:
-        path: /etc/hosts
-        line: "\\1"
-        regexp: "^(127\\.0\\.0\\.1.*)( {{ groups['managed_nodes'] | join(' ') }})$$"
-        backrefs: true
-      become: true
-
     - name: Remove managed nodes from known_hosts
       ansible.builtin.known_hosts:
         path: "{{ ansible_user_dir }}/.ssh/known_hosts"
-        name: "[localhost]:{{ hostvars[item]['ssh_port'] }}]"
+        name: "[localhost]:{{ hostvars[item]['ssh_port'] }}"
         state: absent
       loop: "{{ groups['managed_nodes'] }}"
-    
+
     - name: Delete block from ssh_config
       ansible.builtin.blockinfile:
         block: "{{ lookup('template', 'ssh-config.j2') }}"
         path: "{{ ansible_user_dir }}/.ssh/config"
+        marker: "# {mark} ANSIBLE MANAGED BLOCK FOR WORKSHOP ENVIRONMENT"
         state: absent
-    
+
     - name: Delete ansible.cfg from home directory
       ansible.builtin.file:
         path: "{{ ansible_user_dir }}/.ansible.cfg"
         state: absent
+
+    - name: Check for existing Ansible configuration file backup
+      ansible.builtin.find:
+        path: "{{ ansible_user_dir }}"
+        file_type: file
+        hidden: true
+        use_regex: true
+        patterns: "^\\.ansible\\.cfg\\.\\d*.\\d*-\\d*-\\d*@.*$"
+      register: find_config_file_backup
+
+    - name: Ansible configuration file backup found
+      ansible.builtin.debug:
+        msg: |
+          A backup file was found which was created by Ansible!
+          The following files were found: "{{ find_config_file_backup.files | map(attribute='path') | list | join(', ') }}"
+          Do you want to re-use this Ansible configuation file?
+      when:
+        - find_config_file_backup.matched != 0
+        - found_config_files_backup_list | list | count > 0
+      vars:
+        found_config_files_backup_list: "{{ find_config_file_backup.files | map(attribute='path') | list }}"
+
+    - name: Delete keypair created for Workshop
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ ansible_user_dir }}/.ssh/ansible-workshop-environment"
+        - "{{ ansible_user_dir }}/.ssh/ansible-workshop-environment.pub"
