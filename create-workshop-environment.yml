@@ -58,7 +58,7 @@
         backup: true
       register: config_deployment
 
-    - name: Backup file created
+    - name: Backup file of .ansible.cfg created
       ansible.builtin.debug:
         msg: Backup file at "{{ config_deployment.backup_file }}"
       when: config_deployment.backup_file is defined
@@ -70,21 +70,29 @@
         patterns: ansible-workshop-environment*
       register: find_keypair
 
-    - name: Ensure no keypair with distinct name for workshop is present
-      ansible.builtin.assert:
-        that:
-          - find_keypair.matched == 0
-        quiet: true
-        fail_msg: |
-          A keypair with the name 'ansible-workshop-environment' is present!
-          This is extremely unlikely, but the existing key will not be regenerated.
-          The 'delete-workshop-environment.yml' playbook WILL REMOVE this key!
-          MOVE THE KEY MANUALLY BEFORE RUNNING THIS PLAYBOOK AGAIN OR ANY OTHER FROM THIS PROJECT!
+    - name: Keypair was found
+      when: find_keypair.matched != 0
+      block:
+        - name: Check if OpenSSH keypair does not match target configuration
+          community.crypto.openssh_keypair:
+            path: "{{ ansible_user_dir }}/.ssh/ansible-workshop-environment"
+            comment: Ansible generated, for accessing managed node containers of Ansible Workshop
+          check_mode: true
+          register: keypair_creation_check
+
+        - name: Abort playbook if keypair was found and does not match target configuration # noqa no-handler
+          ansible.builtin.fail:
+            msg: |
+              A keypair 'ansible-workshop-environment' already exists but does match the desired config!
+              The keypair was not created by this playbook.
+              The 'delete-workshop-environment' playbook WILL REMOVE this key!
+              MOVE THE KEY MANUALLY BEFORE RUNNING THIS PLAYBOOK AGAIN OR ANY OTHER FROM THIS PROJECT!
+          when: keypair_creation_check.changed
 
     - name: Create OpenSSH keypair for accessing managed nodes
       community.crypto.openssh_keypair:
         path: "{{ ansible_user_dir }}/.ssh/ansible-workshop-environment"
-        regenerate: never
+        comment: Ansible generated, for accessing managed node containers of Ansible Workshop
 
 - name: Prepare managed nodes
   hosts: managed_nodes
