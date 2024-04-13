@@ -1,6 +1,6 @@
 {# Template will be added as a block to ~/.ssh/config #}
 {% for host in groups['managed_nodes'] %}
-Host {{ host }}
+Host {{ host }} {{ hostvars[host]['hostname'] }}
   Hostname localhost
   User ansible
   Port {{ hostvars[host]['ssh_port'] }}

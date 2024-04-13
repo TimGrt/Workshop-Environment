@@ -14,6 +14,14 @@ For example, if you want to access a webserver running on port 8080 on node2, yo
 
 > NOTE: If any ports in the range of 8001 to 8009 are already occupied, deployment will fail! You can adjust the ports to be used in the `inventory.ini`.  
 
+If you want to resolve the hosts (containers) with their hostname, adjust your `/etc/hosts`:
+
+```ini
+127.0.0.1 localhost node1 node2 node3
+```
+
+You still need to add the port, but now you can run `curl http://node1:8002`.
+
 The SSH port for every container is also exposed via a high port (*node1* on *8001*, *node2* on *8004* and *node3* on *8007*), but you can access the managed nodes container like this:
 
 ```console

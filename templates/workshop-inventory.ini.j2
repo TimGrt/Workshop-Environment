@@ -3,5 +3,5 @@ ansible-1 ansible_connection=local
 
 [web]
 {% for host in groups['managed_nodes'] %}
-{{ host }}
+{{ host }} ansible_host={{ hostvars[host]['hostname'] }}
 {% endfor %}
