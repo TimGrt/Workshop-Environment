@@ -48,6 +48,7 @@
         block: "{{ lookup('template', 'ssh-config.j2') }}"
         path: "{{ ansible_user_dir }}/.ssh/config"
         create: true
+        mode: "0600"
         marker: "# {mark} ANSIBLE MANAGED BLOCK FOR WORKSHOP ENVIRONMENT"
 
     - name: Deploy ansible.cfg to home directory
