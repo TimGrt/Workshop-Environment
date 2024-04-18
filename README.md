@@ -36,6 +36,12 @@ As with the RH Demo environment, you will find your *Ansible Workshop inventory 
 
 ## Create Workshop environment
 
+Install the necessary requirements for Ansible with the following command:
+
+```console
+ansible-galaxy collection install -r requirements.yml
+```
+
 To create the managed node containers, run the `create-workshop-environment` playbook:
 
 ```console
