@@ -28,6 +28,8 @@ The SSH port for every container is also exposed via a high port (*node1* on *80
 ssh node1
 ```
 
+> NOTE: First login might take a while, subsequent logins will be faster!
+
 This is achieved by the addition of a block to your personal `~/.ssh/config`. A SSH keypair is created for the Workshop (stored as `~/.ssh/ansible-workshop-environment` and `~/.ssh/ansible-workshop-environment.pub`).
 
 As with the RH Demo environment, you will find your *Ansible Workshop inventory file* at `~/lab_inventory/hosts`. An Ansible configuration file is created at `~/.ansible.cfg`.
