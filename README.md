@@ -36,7 +36,31 @@ As with the RH Demo environment, you will find your *Ansible Workshop inventory 
 
 > NOTE: If you already have a config file at this location, a backup is created.
 
+## Prepare (local) Ansible control node
+
+You need Python 3.10+, install it (or a newer version). In most Linux distributions, Python is already present. Install the Python package manager, e.g.:
+
+```console
+sudo apt install python3-pip
+```
+
+Install *ansible-core*.
+
+> Currently (Q3 2024), using the *latest* Ansible version (2.17+) is not recommended, if you want to automate *older* (distributions with Python3.6 or less), as we do in the Workshop.
+
+```console
+pip3 install ansible-core==2.16.8 --user
+```
+
+Ansible is installed to `~/.local/bin`, if this path is not yet added to the PATH environment variable (you can't *use* Ansible directly), run `source ~/.profile`.
+
 ## Create Workshop environment
+
+Clone this repository and change into the directory:
+
+```console
+git clone https://github.com/TimGrt/Workshop-Environment.git && cd Workshop-Environment
+```
 
 Install the necessary requirements for Ansible with the following command:
 
