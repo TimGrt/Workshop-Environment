@@ -1,7 +1,8 @@
+# Personal VS Code settings folder
 .vscode/
 
+# Build folder from ansible-builder
 context/
 
-.cache/
-
-site/
+# Ansible cache folder
+.ansible/

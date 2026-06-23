@@ -1,0 +1,15 @@
+---
+profile: production
+
+# Silence infos, warnings and don't show summary
+quiet: true
+
+skip_list:
+  - yaml[line-length]
+
+# Enable some useful rules which are opt-in
+enable_list:
+  - args
+  - empty-string-compare
+  - no-log-password
+  - no-same-owner
