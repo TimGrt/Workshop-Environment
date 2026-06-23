@@ -1,0 +1,8 @@
+---
+plugin: containers.podman.podman_containers
+label_selectors:
+  role: workshop
+verbose_output: true
+group_by_image: false
+group_by_label:
+  - role

@@ -4,15 +4,17 @@ The Ansible playbooks in this repository will create a **demo environment** comp
 The demo environment will mimic the RH Demo Environment with three managed nodes: **node1**, **node2** and **node3**. The Ansible control node will be known as **ansible-1** in the lab inventory.  
 Although containers are used, all managed nodes are accessible via SSH, a couple of ports are exposed with every container:
 
-| Managed node | Port 80 | Port 8080 |
-| ------------ | ------- | --------- |
-| node1        | 8002    | 8003      |
-| node2        | 8005    | 8006      |
-| node3        | 8008    | 8009      |
+| Managed node | Port 22 | Port 80 | Port 8080 |
+| ------------ | ------- | ------- | --------- |
+| node1        | 8001    | 8002    | 8003      |
+| node2        | 8004    | 8005    | 8006      |
+| node3        | 8007    | 8008    | 8009      |
 
 For example, if you want to access a webserver running on port 8080 on node2, you'll need to access it via `http://localhost:8006`.
 
-> NOTE: If any ports in the range of 8001 to 8009 are already occupied, deployment will fail! You can adjust the ports to be used in the `inventory.ini`.  
+> [!NOTE]
+> **You can adjust the number of hosts with the variable `node_count`.**  
+> If any ports starting 8000 are already occupied, deployment will fail! You can adjust this with the variable `port_range_start`.  
 
 If you want to resolve the hosts (containers) with their hostname, adjust your `/etc/hosts`:
 
@@ -22,9 +24,9 @@ If you want to resolve the hosts (containers) with their hostname, adjust your `
 
 You still need to add the port, but now you can run `curl http://node1:8002`.
 
-The SSH port for every container is also exposed via a high port (*node1* on *8001*, *node2* on *8004* and *node3* on *8007*), but you can access the managed nodes container like this:
+The SSH port for every container is also exposed via a high port (*node1* on *8001*, *node2* on *8004*, *node3* on *8007* and so on), but you can access the managed nodes container like this:
 
-```console
+```bash
 ssh node1
 ```
 
@@ -38,45 +40,48 @@ As with the RH Demo environment, you will find your *Ansible Workshop inventory 
 
 ## Prepare (local) Ansible control node
 
-You need Python 3.10+, install it (or a newer version). In most Linux distributions, Python is already present. Install the Python package manager, e.g.:
+> [!NOTE]
+> Using the *latest* Ansible version (2.17+) is not recommended, if you want to automate *older* (distributions with Python3.6 or less), as we do in the Workshop.
 
-```console
-sudo apt install python3-pip
+Create a Python virtual environment and activate it:
+
+```bash
+python3 -m venv ~/ve-workshop
 ```
 
-Install *ansible-core*.
+```bash
+source ~/ve-workshop/bin/activate
+```
 
-> Currently (Q3 2024), using the *latest* Ansible version (2.17+) is not recommended, if you want to automate *older* (distributions with Python3.6 or less), as we do in the Workshop.
-
-```console
-pip3 install ansible-core==2.16.8 --user
+```bash
+pip3 install ansible-core==2.16.18 --user
 ```
 
 Ansible is installed to `~/.local/bin`, if this path is not yet added to the PATH environment variable (you can't *use* Ansible directly), run `source ~/.profile`.
 
-## Create Workshop environment
-
 Clone this repository and change into the directory:
 
-```console
+```bash
 git clone https://github.com/TimGrt/Workshop-Environment.git && cd Workshop-Environment
 ```
 
 Install the necessary requirements for Ansible with the following command:
 
-```console
+```bash
 ansible-galaxy collection install -r requirements.yml
 ```
 
+## Create Workshop environment
+
 To create the managed node containers, run the `create-workshop-environment` playbook:
 
-```console
+```bash
 ansible-playbook create-workshop-environment.yml
 ```
 
 The playbook checks if the Podman container runtime is installed. If it is not present, the playbook will try to install it, this task is the only one where *sudo* permissions are necessary. Either run the playbook with `--ask-become-pass` (if you need to provide a sudo password by default) or install Podman manually. For Ubuntu or Debian, use the following command:
 
-```console
+```bash
 sudo apt-get update && sudo apt-get -y install podman  
 ```
 
@@ -96,8 +101,8 @@ The playbook will do the following steps:
 
 After completing the workshop, you can remove all traces of the demo environment by running the `delete-workshop-environment` playbook:
 
-```console
-ansible-playbook create-workshop-environment.yml
+```bash
+ansible-playbook delete-workshop-environment.yml
 ```
 
 The playbook will do the following steps:
@@ -111,6 +116,6 @@ The playbook will do the following steps:
 
 If you want to delete the Podman installation as well, run the playbook like this:
 
-```console
+```bash
 ansible-playbook delete-workshop-environment.yml -e delete_podman=true
 ```
