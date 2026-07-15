@@ -24,7 +24,7 @@
 
     - name: Create node variables
       ansible.builtin.set_fact:
-        managed_node_list: "{{ managed_node_list | default([]) + [{'name': 'node' + item | string, 'ssh_port': port_range_start + (item * 3) - 2, 'webserver_port1': port_range_start + (item * 3) - 1, 'webserver_port2': port_range_start + (item * 3)}] }}"
+        managed_node_list: "{{ managed_node_list | default([]) + [{'name': 'node' ~ item, 'ssh_port': managed_node_ssh_port, 'webserver_port1': managed_node_webserver_port1, 'webserver_port2': managed_node_webserver_port2}] }}"
       loop: "{{ range(1, node_count + 1) | list }}"
       loop_control:
         label: "node{{ item }}"
