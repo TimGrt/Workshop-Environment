@@ -3,6 +3,4 @@
 collections:
   - ansible.posix
   - community.crypto
-  - community.general
-  - name: containers.podman
-    version: ">=1.18.0"
+  - containers.podman
