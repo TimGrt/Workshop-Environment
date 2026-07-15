@@ -2,23 +2,29 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
-      - id: check-merge-conflict
-        name: Check for merge conflict markers
-      - id: check-yaml
-        name: Check YAML syntax
-        args: [--unsafe]
       - id: trailing-whitespace
-        name: Remove trailing whitespaces
+        name: 📝 Remove trailing whitespaces
         args: [--markdown-linebreak-ext=md]
+      - id: check-merge-conflict
+        name: ❌ Check for merge conflict markers
+      - id: check-yaml
+        name: 🐫 Check YAML syntax
+        args: [--unsafe]
       - id: no-commit-to-branch
-        name: Ensure committing to allowed branch
-      - id: requirements-txt-fixer
-        name: Sort entries in requirements.txt
+        name: 💻 Check for commits to allowed branch
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.49.1
+    hooks:
+      - id: markdownlint
+        name: 📋 Check Markdown syntax
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.37.3
+    rev: 0.37.4
     hooks:
       - id: check-github-workflows
+        name: ➿ Check GitHub Workflows
   - repo: https://github.com/ansible-community/ansible-lint
-    rev: v26.4.0
+    rev: v26.6.0
     hooks:
       - id: ansible-lint
+        language_version: python3
+        name: 🔎 Check playbooks with ansible-lint
