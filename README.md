@@ -14,6 +14,7 @@ For example, if you want to access a webserver running on port 8080 on node2, yo
 
 > [!NOTE]
 > **You can adjust the number of hosts with the variable `node_count`.**  
+> The ports are adjusted automatically following the scheme shown in the table above.  
 > If any ports starting 8000 are already occupied, deployment will fail! You can adjust this with the variable `port_range_start`.  
 
 If you want to resolve the hosts (containers) with their hostname, adjust your `/etc/hosts`:
@@ -57,8 +58,6 @@ source ~/ve-workshop/bin/activate
 pip3 install ansible-core==2.16.18 --user
 ```
 
-Ansible is installed to `~/.local/bin`, if this path is not yet added to the PATH environment variable (you can't *use* Ansible directly), run `source ~/.profile`.
-
 Clone this repository and change into the directory:
 
 ```bash
@@ -90,7 +89,7 @@ Take a look at the [Podman documentation](https://podman.io/docs/installation#li
 The playbook will do the following steps:
 
 1. Install Podman (if necessary).
-2. Pull a Docker image and start as many containers as are defined in the inventory.
+2. Pull a Container image and start as many containers as are defined in the inventory.
 3. Deploy the *Workshop inventory* (not the same as is used by this playbook!) to `~/lab_inventory/hosts`.
 4. Add a block with SSH config to access the managed nodes to `~/.ssh/config`.
 5. Deploy the Ansible configuration for the Workshop to `~/.ansible.cfg`.
