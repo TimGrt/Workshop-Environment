@@ -6,7 +6,7 @@
   vars:
     node_count: 3
     port_range_start: 8000
-    container_image: ghcr.io/timgrt/rhel8-molecule-test-image:main
+    container_image: ghcr.io/timgrt/ansible-test-image-rhel8:main
   tasks:
     - name: Get package facts
       ansible.builtin.package_facts:
@@ -25,7 +25,7 @@
     - name: Create node variables
       ansible.builtin.set_fact:
         managed_node_list: "{{ managed_node_list | default([]) + [{'name': 'node' ~ item, 'ssh_port': managed_node_ssh_port, 'webserver_port1': managed_node_webserver_port1, 'webserver_port2': managed_node_webserver_port2}] }}"
-      loop: "{{ range(1, node_count + 1) | list }}"
+      loop: "{{ range(1, (node_count | int) + 1) | list }}"
       loop_control:
         label: "node{{ item }}"
       vars:
@@ -46,7 +46,7 @@
           - "{{ managed_node_webserver_port2 }}:8080"
         stop_signal: 15
         state: started
-      loop: "{{ range(1, node_count + 1) | list }}"
+      loop: "{{ range(1, (node_count | int) + 1) | list }}"
       loop_control:
         extended: true
         label: "Hostname: node{{ ansible_loop.index }}, SSH Port: {{ managed_node_ssh_port }}, Webserver ports: {{ managed_node_webserver_port1 }}, {{ managed_node_webserver_port2 }}"
@@ -60,7 +60,7 @@
         name: "node{{ item }}"
         groups: managed_nodes
         ansible_connection: podman
-      loop: "{{ range(1, node_count + 1) | list }}"
+      loop: "{{ range(1, (node_count | int) + 1) | list }}"
       loop_control:
         label: "node{{ item }}"
       changed_when: false
