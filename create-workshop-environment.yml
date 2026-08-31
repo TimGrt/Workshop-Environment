@@ -6,7 +6,7 @@
   vars:
     node_count: 3
     port_range_start: 8000
-    container_image: ghcr.io/timgrt/ansible-test-image-rhel8:main
+    container_image: ghcr.io/timgrt/ansible-test-image-rhel9:main
   tasks:
     - name: Get package facts
       ansible.builtin.package_facts:
@@ -37,7 +37,7 @@
       containers.podman.podman_container:
         name: "node{{ ansible_loop.index }}"
         image: "{{ container_image }}"
-        hostname: " node{{ ansible_loop.index }}.example.com"
+        hostname: "node{{ ansible_loop.index }}.example.com"
         label:
           role: workshop
         ports:
